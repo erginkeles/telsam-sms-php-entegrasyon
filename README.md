@@ -26,6 +26,7 @@ print_r($send);
 ## sendBulk() Example
 To send a single text message to multiple phone numbers
 
+```php
 $telsam->setUsername("XXXXXXXXX); // websms.telsam.com.tr login username
 $telsam->setPassword("XXXXXXXXX"); // websms.telsam.com.tr login password
 $telsam->setOriginator("XXXXXXXX"); // One of the approved titles (originators)
@@ -39,6 +40,7 @@ $numbers = array(
 $send = $telsam->sendBulk($numbers, "Test bulk message");
 
 print_r($send);
+```
 
 Both sendSingle() and sendBulk() methods returns an **array** with **status**, **message** and **data** keys.
 

@@ -112,7 +112,7 @@ class Telsam{
             }
             elseif(isset($result->status) && $result->status == "OK"){
                 $successReturn = array(
-                    "batch_id"  => $result->message_id
+                    "batch_id"  => $result->message_id,
                     "paid"      => $result->amount,
                     "balance"   => $result->credit
                 );

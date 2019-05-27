@@ -42,6 +42,6 @@ $send = $telsam->sendBulk($numbers, "Test bulk message");
 print_r($send);
 ```
 
-Both sendSingle() and sendBulk() methods returns an **array** with **status**, **message** and **data** keys.
+Both **sendSingle()** and **sendBulk()** methods returns an **array** with **status**, **message** and **data** keys.
 
 **status** will be **success** if an sms order successfully created on Telsam. **data** parameter will carry **batch_id** (telsam job id), **paid** (paid credits for that job) and **balance** (remaining credits). Otherwise **data** will be an empty array.

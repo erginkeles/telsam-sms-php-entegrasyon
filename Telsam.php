@@ -2,27 +2,27 @@
 
 class Telsam{
 
-	function __construct(){
+    function __construct(){
 
-		$this->telsamEndpoint = "http://websms.telsam.com.tr/xmlapi/sendsms";
+        $this->telsamEndpoint = "http://websms.telsam.com.tr/xmlapi/sendsms";
 
-	}
+    }
 
-	function setUsername($username){
-		$this->telsamUsername = $username;
-	}
+    function setUsername($username){
+        $this->telsamUsername = $username;
+    }
 
-	function setPassword($password){
-		$this->telsamPassword = $password;
-	}
+    function setPassword($password){
+        $this->telsamPassword = $password;
+    }
 
-	function setOriginator($originator){
-		$this->telsamOriginator = $originator;
-	}
+    function setOriginator($originator){
+        $this->telsamOriginator = $originator;
+    }
 
-	function prepareXml($text, $receivers){
+    function prepareXml($textToSend, $receiversToSend){
 
-		$xml = new DOMDocument();
+        $xml = new DOMDocument();
         
         $SMS = $xml->createElement("SMS");
         $SMS = $xml->appendChild($SMS);
@@ -39,7 +39,7 @@ class Telsam{
         $message->appendChild($xml->createElement('originator', $this->telsamOriginator));
 
         $text = $message->appendChild($xml->createElement('text'));
-        $text->appendChild($xml->createCDATASection($text));
+        $text->appendChild($xml->createCDATASection($textToSend));
 
         $unicode = $message->appendChild($xml->createElement('unicode'));
         $international = $message->appendChild($xml->createElement('international'));
@@ -50,7 +50,7 @@ class Telsam{
         $receivers = $xml->createElement("receivers");
         $receivers = $SMS->appendChild($receivers);
 
-        foreach($receivers as $receiver){
+        foreach($receiversToSend as $receiver){
 
             $receivers->appendChild($xml->createElement('receiver', $receiver));
 
@@ -61,16 +61,28 @@ class Telsam{
         
         return $xml->saveXML();
 
-	}
+    }
 
-	function sendSingle($number, $text){
+    function sendSingle($number, $text){
 
         if(is_string($number) || is_int($number)){
             $getXml = $this->prepareXml($text, array($number));
-            $this->telsamPost($getXml);
+            return $this->telsamPost($getXml);
         }
         else{
-            echo "sendSingle(int|string, string) parametre hatası!";
+            return $this->telsamReturn("error", "sendSingle(int|string, string) parametre hatası!");
+        }
+        
+    }
+
+    function sendBulk($numbers, $text){
+
+        if(is_array($numbers)){
+            $getXml = $this->prepareXml($text, $numbers);
+            return $this->telsamPost($getXml);
+        }
+        else{
+            return $this->telsamReturn("error", "sendBulk(array, string) parametre hatası!");
         }
         
     }
@@ -86,9 +98,41 @@ class Telsam{
         curl_setopt($ch, CURLOPT_TIMEOUT_MS, 5000);
         
         $result = curl_exec($ch);
+        $error = curl_error($ch);
 
-        return $result;
+        if(strlen($error) > 0){
+            return $this->telsamReturn("error", $error);
+        }
+        else{
+            
+            $result = simplexml_load_string($result);
+
+            if(isset($result->status) && $result->status == "ERROR"){
+                return $this->telsamReturn("error", $result->error_code . " - " . $result->error_description);
+            }
+            elseif(isset($result->status) && $result->status == "OK"){
+                $successReturn = array(
+                    "batch_id"  => $result->message_id
+                    "paid"      => $result->amount,
+                    "balance"   => $result->credit
+                );
+                return $this->telsamReturn("success", "Başarılı", $successReturn);
+            }
+            else{
+                return $this->telsamReturn("error", "Api cevabı anlaşılamadı!");
+            }
+            
+
+        }
         
+    }
+
+    private function telsamReturn($status, $message, $data = array()){
+        return array(
+            "status" => $status,
+            "message" => $message,
+            "data" => $data
+        );
     }
 
 }
